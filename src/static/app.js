@@ -102,6 +102,31 @@ document.addEventListener("DOMContentLoaded", () => {
         messageDiv.textContent = result.message;
         messageDiv.className = "success";
         signupForm.reset();
+
+        // Update the activity card dynamically
+        const activityCard = Array.from(document.querySelectorAll(".activity-card"))
+          .find((card) => card.querySelector("h4")?.textContent === activity);
+
+        if (activityCard) {
+          const participantsSection = activityCard.querySelector(".participants-section ul");
+          const spotsLeftElement = activityCard.querySelector("p:nth-of-type(3)");
+
+          if (participantsSection) {
+            // Add the new participant to the list
+            const newParticipant = document.createElement("li");
+            newParticipant.textContent = email;
+            participantsSection.appendChild(newParticipant);
+          }
+
+          if (spotsLeftElement) {
+            // Update spots left
+            const spotsLeftText = spotsLeftElement.textContent.match(/\d+/);
+            if (spotsLeftText) {
+              const spotsLeft = parseInt(spotsLeftText[0], 10) - 1;
+              spotsLeftElement.textContent = `Availability: ${spotsLeft} spots left`;
+            }
+          }
+        }
       } else {
         messageDiv.textContent = result.detail || "An error occurred";
         messageDiv.className = "error";
@@ -114,10 +139,10 @@ document.addEventListener("DOMContentLoaded", () => {
         messageDiv.classList.add("hidden");
       }, 5000);
     } catch (error) {
+      console.error("Error signing up:", error);
       messageDiv.textContent = "Failed to sign up. Please try again.";
       messageDiv.className = "error";
       messageDiv.classList.remove("hidden");
-      console.error("Error signing up:", error);
     }
   });
 
