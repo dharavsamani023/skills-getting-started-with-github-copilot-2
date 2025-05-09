@@ -33,6 +33,7 @@ document.addEventListener("DOMContentLoaded", () => {
             <strong>Participants:</strong>
             <ul>${participantsList || "<li>No participants yet</li>"}</ul>
           </div>
+          <button class="unregister-btn" data-activity="${name}">Unregister</button>
         `;
 
         activitiesList.appendChild(activityCard);
@@ -42,6 +43,37 @@ document.addEventListener("DOMContentLoaded", () => {
         option.value = name;
         option.textContent = name;
         activitySelect.appendChild(option);
+      });
+
+      // Add event listeners for unregister buttons
+      document.querySelectorAll(".unregister-btn").forEach((button) => {
+        button.addEventListener("click", async (event) => {
+          const activityName = event.target.dataset.activity;
+          const email = prompt("Enter your email to unregister:");
+
+          if (email) {
+            try {
+              const response = await fetch(
+                `/activities/${encodeURIComponent(activityName)}/unregister?email=${encodeURIComponent(email)}`,
+                {
+                  method: "POST",
+                }
+              );
+
+              const result = await response.json();
+
+              if (response.ok) {
+                alert(result.message);
+                fetchActivities(); // Refresh activities list
+              } else {
+                alert(result.detail || "An error occurred");
+              }
+            } catch (error) {
+              console.error("Error unregistering:", error);
+              alert("Failed to unregister. Please try again.");
+            }
+          }
+        });
       });
     } catch (error) {
       activitiesList.innerHTML = "<p>Failed to load activities. Please try again later.</p>";
@@ -70,6 +102,31 @@ document.addEventListener("DOMContentLoaded", () => {
         messageDiv.textContent = result.message;
         messageDiv.className = "success";
         signupForm.reset();
+
+        // Update the activity card dynamically
+        const activityCard = Array.from(document.querySelectorAll(".activity-card"))
+          .find((card) => card.querySelector("h4")?.textContent === activity);
+
+        if (activityCard) {
+          const participantsSection = activityCard.querySelector(".participants-section ul");
+          const spotsLeftElement = activityCard.querySelector("p:nth-of-type(3)");
+
+          if (participantsSection) {
+            // Add the new participant to the list
+            const newParticipant = document.createElement("li");
+            newParticipant.textContent = email;
+            participantsSection.appendChild(newParticipant);
+          }
+
+          if (spotsLeftElement) {
+            // Update spots left
+            const spotsLeftText = spotsLeftElement.textContent.match(/\d+/);
+            if (spotsLeftText) {
+              const spotsLeft = parseInt(spotsLeftText[0], 10) - 1;
+              spotsLeftElement.textContent = `Availability: ${spotsLeft} spots left`;
+            }
+          }
+        }
       } else {
         messageDiv.textContent = result.detail || "An error occurred";
         messageDiv.className = "error";
@@ -82,10 +139,10 @@ document.addEventListener("DOMContentLoaded", () => {
         messageDiv.classList.add("hidden");
       }, 5000);
     } catch (error) {
+      console.error("Error signing up:", error);
       messageDiv.textContent = "Failed to sign up. Please try again.";
       messageDiv.className = "error";
       messageDiv.classList.remove("hidden");
-      console.error("Error signing up:", error);
     }
   });
 
