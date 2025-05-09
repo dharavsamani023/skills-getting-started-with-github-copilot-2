@@ -33,6 +33,7 @@ document.addEventListener("DOMContentLoaded", () => {
             <strong>Participants:</strong>
             <ul>${participantsList || "<li>No participants yet</li>"}</ul>
           </div>
+          <button class="unregister-btn" data-activity="${name}">Unregister</button>
         `;
 
         activitiesList.appendChild(activityCard);
@@ -42,6 +43,37 @@ document.addEventListener("DOMContentLoaded", () => {
         option.value = name;
         option.textContent = name;
         activitySelect.appendChild(option);
+      });
+
+      // Add event listeners for unregister buttons
+      document.querySelectorAll(".unregister-btn").forEach((button) => {
+        button.addEventListener("click", async (event) => {
+          const activityName = event.target.dataset.activity;
+          const email = prompt("Enter your email to unregister:");
+
+          if (email) {
+            try {
+              const response = await fetch(
+                `/activities/${encodeURIComponent(activityName)}/unregister?email=${encodeURIComponent(email)}`,
+                {
+                  method: "POST",
+                }
+              );
+
+              const result = await response.json();
+
+              if (response.ok) {
+                alert(result.message);
+                fetchActivities(); // Refresh activities list
+              } else {
+                alert(result.detail || "An error occurred");
+              }
+            } catch (error) {
+              console.error("Error unregistering:", error);
+              alert("Failed to unregister. Please try again.");
+            }
+          }
+        });
       });
     } catch (error) {
       activitiesList.innerHTML = "<p>Failed to load activities. Please try again later.</p>";
